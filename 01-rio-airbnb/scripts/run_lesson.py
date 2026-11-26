@@ -36,22 +36,25 @@ def main() -> None:
     tr, va, te = (d[d.split == s] for s in ("train", "validation", "test"))
     print(f"{len(d):,} listings: {len(tr):,} train, {len(va):,} validation, {len(te):,} test")
 
+    charts: dict = {}
     res = {"counts": {"listings": len(d), "train": len(tr), "validation": len(va), "test": len(te)}}
     lesson.explore(d, DATA / "neighbourhoods.geojson", save="01_explore.png")
-    res["step1_beaches"] = lesson.beaches(tr, save="02_beaches.png")
+    res["step1_beaches"] = lesson.beaches(tr, save="02_beaches.png", charts=charts)
     res["step2_baselines"] = lesson.baselines(tr, va)
-    res["step3_one_feature"] = lesson.gradient_descent_one_feature(tr, va, save="03_gradient_descent.png")
-    res["step4_all_features"] = lesson.scaling_and_features(tr, va, save="04_scaling.png")
-    res["step5_overfitting"] = lesson.overfitting(tr, va, save="05_overfitting.png")
-    res["step6_classification"] = lesson.classification(tr, va, THRESHOLD, save="06_classification.png")
+    res["step3_one_feature"] = lesson.gradient_descent_one_feature(tr, va, save="03_gradient_descent.png", charts=charts)
+    res["step4_all_features"] = lesson.scaling_and_features(tr, va, save="04_scaling.png", charts=charts)
+    res["step5_overfitting"] = lesson.overfitting(tr, va, save="05_overfitting.png", charts=charts)
+    res["step6_classification"] = lesson.classification(tr, va, THRESHOLD, save="06_classification.png", charts=charts)
 
     # Final test, once, with the choices made above.
     alpha = min(res["step5_overfitting"]["best_model_alphas"], key=lambda r: -r["val"]["r2"])["alpha"]
     price = lesson.best_price_model(tr, alpha)
+    log_pred = price(te)
     business, _ = lesson.classifier(tr, booking=True)
     p_te = business(te)
     res["test"] = {
-        "price_model": {"alpha": alpha, **lesson.price_scores(te.log_price.to_numpy(), price(te))},
+        "price_model": {"alpha": alpha, **lesson.price_scores(te.log_price.to_numpy(), log_pred)},
+        "price_predictions": lesson.test_predictions(te, log_pred, save="07_test_predictions.png", charts=charts),
         "price_baseline_both_lookup": lesson.baselines(tr, te)["both"],
         "business": {"auc": round(float(lesson.roc_auc_score(te.business, p_te)), 3),
                      "always_not_business_accuracy": round(1 - float(te.business.mean()), 3),
@@ -61,6 +64,7 @@ def main() -> None:
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     (out / "results.json").write_text(json.dumps(res, indent=1, default=lambda o: float(o) if isinstance(o, np.floating) else str(o)) + "\n")
+    (out / "charts.json").write_text(json.dumps(charts, separators=(",", ":")) + "\n")   # data for the website charts
     print(json.dumps(res["test"], indent=1))
 
 

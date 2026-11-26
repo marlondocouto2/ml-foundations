@@ -1,7 +1,8 @@
 # Airbnb in Rio de Janeiro: regression and classification
 
-A practice project for course 1 of the
-[Machine Learning Specialization](https://www.coursera.org/specializations/machine-learning-introduction).
+A recap of course 1 of the
+[Machine Learning Specialization](https://www.coursera.org/specializations/machine-learning-introduction),
+which I'm going back through as a refresher.
 It asks two questions about **43,192 Airbnb listings in Rio**:
 
 1. **What drives the nightly price?** (linear regression)
@@ -19,6 +20,8 @@ It asks two questions about **43,192 Airbnb listings in Rio**:
 **The price model** uses curves (degree 2), neighbourhoods and Ridge regularization.
 
 **The business-host finding is honest:** a listing alone barely shows whether its host runs a business.
+
+![Predicted vs actual nightly prices on the test set](figures/07_test_predictions.png)
 
 ![Price vs distance to ocean and bay beaches](figures/02_beaches.png)
 
@@ -47,7 +50,7 @@ It asks two questions about **43,192 Airbnb listings in Rio**:
 | 4. All features | Multiple regression, feature scaling | Raw vs scaled gradient descent; effects of each feature |
 | 5. Flexibility | Polynomial features, overfitting, regularization | 151 neighbourhoods; degrees 1–4; Ridge strength chosen on validation |
 | 6. Classification | Logistic regression, decision boundary, threshold | Booking behaviour added; cut-off 0.7, because false alarms are worse |
-| 7. Final test | Honest evaluation | The test set is scored once |
+| 7. Final test | Honest evaluation | The test set is scored once; predictions vs actual prices |
 
 ## Data
 
@@ -65,7 +68,7 @@ It asks two questions about **43,192 Airbnb listings in Rio**:
 
 ```bash
 pip install -r requirements.txt
-python scripts/run_lesson.py              # all steps: figures/ and reports/results.json (~1 min)
+python scripts/run_lesson.py              # all steps: figures/, reports/results.json and reports/charts.json (~1 min)
 python scripts/run_lesson.py --download   # re-download the sources and rebuild the data first
 pytest                                    # the host-grouped split, no leakage, beach distances, model vs baseline
 ```

@@ -1,9 +1,10 @@
 # Machine learning foundations
 
-Practice projects that go with the
+Recap projects for the
 [Machine Learning Specialization](https://www.coursera.org/specializations/machine-learning-introduction)
-(DeepLearning.AI and Stanford). After each course, I apply its main ideas to a real public
-dataset, outside finance, with scikit-learn, and write up what I decided and what I learned.
+(DeepLearning.AI and Stanford), which I'm going back through as a refresher. After each course,
+I apply its main ideas to a real public dataset, outside finance, with scikit-learn, and write
+up the decisions and takeaways.
 
 These are lighter than my [main portfolio projects](https://marlondocouto.com): one notebook
 each, honest baselines, a test set used once, and tests for the parts that could go wrong.

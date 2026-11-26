@@ -13,7 +13,7 @@ md, code = nbf.v4.new_markdown_cell, nbf.v4.new_code_cell
 cells = [
     md("""# Airbnb in Rio de Janeiro: regression and classification
 
-A practice project for **course 1 of the [Machine Learning Specialization](https://www.coursera.org/specializations/machine-learning-introduction)**: linear regression, the cost function, gradient descent, feature scaling, polynomial features, overfitting, regularization and logistic regression, practised with scikit-learn on real data.
+A recap of **course 1 of the [Machine Learning Specialization](https://www.coursera.org/specializations/machine-learning-introduction)**, which I'm going back through as a refresher: linear regression, the cost function, gradient descent, feature scaling, polynomial features, overfitting, regularization and logistic regression, applied with scikit-learn to real data.
 
 Two questions about **43,192 Airbnb listings in Rio**:
 1. **What drives the nightly price?** (linear regression)
@@ -40,7 +40,7 @@ show = lambda name: display(Image(filename=f'../figures/{name}', width=1000))
 print(f'{len(d):,} listings: {len(tr):,} train, {len(va):,} validation, {len(te):,} test')"""),
     md("""## 1. The data, and the decisions behind it
 
-- **Price on a log scale.** Prices run from about R$90 to R$7,500 a night. Predicting the log of the price means the model learns a **base price** and **multipliers** ("a sea view adds X%"), which suits prices this lopsided. Missing prices and the extreme 1% at either end are dropped.
+- **Price on a log scale.** Prices run from about 90 to 7,500 reais (R&#36;) a night. Predicting the log of the price means the model learns a **base price** and **multipliers** ("a sea view adds X%"), which suits prices this lopsided. Missing prices and the extreme 1% at either end are dropped.
 - **A business host runs 3 or more listings**: anyone using Airbnb as a source of income, not necessarily a company. That's 43% of listings. The host's listing counts are the answer, so they are never used as features.
 - **Features:**
   - **Location:** distance to the nearest ocean beach, distance to the nearest bay beach, distance to the metro, neighbourhood, sea view, beachfront.
@@ -50,7 +50,7 @@ print(f'{len(d):,} listings: {len(tr):,} train, {len(va):,} validation, {len(te)
 - **Ocean or bay beaches?** Both are kept, to test whether Guanabara Bay beaches like Botafogo's matter, or only the ocean.
 - **Split:** 70% train, 15% validation (for choices), 15% test (used once, at the end). **Every host's listings stay on the same side**: otherwise a big host's other flats in training would give away its listings in the test."""),
     code("""lesson.explore(d, DATA / 'neighbourhoods.geojson', save='01_explore.png'); show('01_explore.png')"""),
-    md("""**Ocean vs bay beaches.** Price falls steadily with distance from an **ocean** beach, while distance to a **bay** beach shows no pattern. Botafogo, near a bay beach, sits right on the ocean curve: its premium over areas like Tijuca comes from being about 2 km from Copacabana, not from its own beach."""),
+    md("""**Ocean vs bay beaches.** Price falls steadily with distance from an **ocean** beach, while distance to a **bay** beach shows no pattern. Botafogo, near a bay beach, sits close to the ocean curve: its premium over areas like Tijuca comes from being about 2 km from Copacabana, not from its own beach."""),
     code("""lesson.beaches(tr, save='02_beaches.png'); show('02_beaches.png')
 pd.DataFrame([{'neighbourhood': n, 'median price (R$)': round(g.price.median()),
                'km to ocean beach': round(g.km_ocean_beach.median(), 1), 'km to bay beach': round(g.km_bay_beach.median(), 1),
@@ -72,7 +72,7 @@ Chosen feature: **bedrooms**. scikit-learn's `SGDRegressor` *is* gradient descen
 - **Learning rate:**
   - *about right* reaches the lowest possible cost in a few passes;
   - *too small* crawls;
-  - *too large* overshoots and bounces, and even larger rates explode."""),
+  - *too large* overshoots and never gets close: its cost stays high."""),
     md("""## 4. All the features, and feature scaling
 
 Features run on very different scales: bedrooms from 0 to 10, distances from 0 to 40 km, reviews up to about 800. Prediction made beforehand: without scaling, gradient descent gets **bouncier**."""),
@@ -117,10 +117,14 @@ pd.DataFrame(cls['thresholds'])"""),
   - but it catches fewer business hosts (recall)."""),
     md("""## 7. Final test, once
 
-The test set was never used for any choice above."""),
+The test set was never used for any choice above. The chart compares the price model's predictions with the actual prices of the test listings."""),
     code("""res = json.load(open('../reports/results.json'))
+show('07_test_predictions.png')
 res['test']"""),
-    md("""## What I learned
+    md("""- **Each listing (left):** about two thirds of predictions are within ±50% of the actual price. The misses are mostly listings priced well above what the data can explain: photos, decor and the host's pricing strategy aren't in it.
+- **Each neighbourhood (right):** the typical predicted price lands close to the typical actual price, from Centro to Leblon.
+- **Business host:** AUC 0.64 on the test set. At the 0.7 cut-off, 2 in 3 flags are right, but only 1 in 20 business listings is caught, in line with validation."""),
+    md("""## Takeaways
 
 - **Simple baselines first:** a lookup by size beats one by neighbourhood, and every model has to beat both.
 - **Learning rate and scaling go together:** without scaling, a rate that suits one feature makes another bounce.

@@ -295,6 +295,10 @@
    "typical_miss_pct": 44.9,
    "median_miss_brl": 123
   },
+  "price_predictions": {
+   "within_50_pct": 66.3,
+   "neighbourhood_r2": 0.878
+  },
   "price_baseline_both_lookup": {
    "r2": 0.361,
    "typical_miss_pct": 54.0,

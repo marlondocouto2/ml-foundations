@@ -1,6 +1,6 @@
 """The six lessons, as functions: each returns its numbers and (optionally) saves its chart.
 
-Course 1 of the Machine Learning Specialization (regression and classification), practised with
+A recap of course 1 of the Machine Learning Specialization (regression and classification), applied with
 scikit-learn on Airbnb listings in Rio de Janeiro. See `rio.py` for the data.
 """
 
@@ -10,6 +10,7 @@ import warnings
 from pathlib import Path
 
 import matplotlib
+import matplotlib.ticker
 import numpy as np
 import pandas as pd
 
@@ -96,7 +97,7 @@ def explore(d: pd.DataFrame, neighbourhoods_geojson: Path | None = None, save: s
     return _save(fig, save)
 
 
-def beaches(tr: pd.DataFrame, save: str | None = None) -> dict:
+def beaches(tr: pd.DataFrame, save: str | None = None, charts: dict | None = None) -> dict:
     """Median price by distance to the nearest ocean beach and bay beach; a few neighbourhoods marked."""
     fig, ax = plt.subplots(1, 2, figsize=(14, 4.6), sharey=True)
     bins = [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 25]
@@ -114,6 +115,14 @@ def beaches(tr: pd.DataFrame, save: str | None = None) -> dict:
             a.scatter(s[col].median(), s.price.median(), s=120, color=c, zorder=5, edgecolor="white")
             a.annotate(n, (s[col].median(), s.price.median()), xytext=(6, 6), textcoords="offset points", color=c, fontsize=9)
         out[col] = {str(k): round(float(v)) for k, v in g.items()}
+        if charts is not None:
+            n = tr.groupby(pd.cut(tr[col], bins), observed=True).size()
+            charts.setdefault("beaches", {})[col] = {"x": [round((i.left + i.right) / 2, 3) for i in g.index],
+                                                     "y": [round(float(v)) for v in g.values], "n": [int(v) for v in n.values]}
+    if charts is not None:
+        charts["beaches"]["marks"] = [{"name": n, "km_ocean_beach": round(float(s.km_ocean_beach.median()), 2),
+                                       "km_bay_beach": round(float(s.km_bay_beach.median()), 2), "price": round(float(s.price.median()))}
+                                      for n in ("Botafogo", "Copacabana", "Tijuca") for s in [tr[tr.neighbourhood == n]]]
     ax[0].set_ylabel("Median nightly price (R$)")
     _save(fig, save)
     return out
@@ -143,7 +152,7 @@ def baselines(tr: pd.DataFrame, va: pd.DataFrame) -> dict:
 
 
 # ---------------------------------------------------------------- step 3: gradient descent, one feature
-def gradient_descent_one_feature(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None) -> dict:
+def gradient_descent_one_feature(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None, charts: dict | None = None) -> dict:
     X, y = tr[["bedrooms"]].to_numpy(float), tr.log_price.to_numpy()
     best_cost = mean_squared_error(y, LinearRegression().fit(X, y).predict(X))
     runs = {}
@@ -178,13 +187,21 @@ def gradient_descent_one_feature(tr: pd.DataFrame, va: pd.DataFrame, save: str |
               title="Gradient descent with three learning rates")
     ax[1].legend(frameon=False)
     _save(fig, save)
+    if charts is not None:
+        b = tr.assign(b=tr.bedrooms.clip(upper=6)).groupby("b").price
+        charts["gradient_descent"] = {
+            "curves": {label: [round(float(c), 4) for c in costs] for label, (costs, _, _) in runs.items()},
+            "lowest_cost": round(float(best_cost), 4),
+            "bedrooms": {"x": [int(k) for k in b.median().index], "median": [round(float(v)) for v in b.median()],
+                         "p25": [round(float(v)) for v in b.quantile(0.25)], "p75": [round(float(v)) for v in b.quantile(0.75)]},
+            "fit": [round(float(np.exp(good.intercept_[0] + good.coef_[0] * x))) for x in range(7)]}
     p = good.predict(va[["bedrooms"]].to_numpy(float))
     return {"base_price_brl": round(float(np.exp(good.intercept_[0]))), "per_bedroom_pct": round(float(np.expm1(good.coef_[0]) * 100), 1),
             "validation": price_scores(va.log_price.to_numpy(), p)}
 
 
 # ---------------------------------------------------------------- step 4: scaling and all features
-def scaling_and_features(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None) -> dict:
+def scaling_and_features(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None, charts: dict | None = None) -> dict:
     fill = tr.rating.median()
     Xtr, Xva = numeric_matrix(tr, fill), numeric_matrix(va, fill)
     y = tr.log_price.to_numpy()
@@ -203,6 +220,9 @@ def scaling_and_features(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = 
     runs = [("Scaled, learning rate 0.0001", run(Xs, 0.0001), COLORS["green"]),
             ("Raw, same learning rate 0.0001", run(Xtr.to_numpy(float), 0.0001), COLORS["orange"]),
             ("Raw, 10x smaller rate 0.00001", run(Xtr.to_numpy(float), 0.00001), COLORS["gray"])]
+    if charts is not None:
+        charts["scaling"] = {"curves": {n: [round(float(v), 4) if np.isfinite(v) else None for v in c] for n, c, _ in runs},
+                             "lowest_cost": round(float(best), 4)}
     fig, ax = plt.subplots(figsize=(9, 4.6))
     for n, c, col in runs:
         ax.plot(range(1, 31), c, marker="o", ms=3, color=col, label=n)
@@ -242,7 +262,7 @@ def best_price_model(tr: pd.DataFrame, alpha: float):
     return lambda df: model.predict(scale.transform(X(df)))
 
 
-def overfitting(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None) -> dict:
+def overfitting(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None, charts: dict | None = None) -> dict:
     fill = tr.rating.median()
     Xtr, Xva = numeric_matrix(tr, fill), numeric_matrix(va, fill)
     ytr, yva = tr.log_price.to_numpy(), va.log_price.to_numpy()
@@ -262,6 +282,8 @@ def overfitting(tr: pd.DataFrame, va: pd.DataFrame, save: str | None = None) -> 
     best = []
     for a in [1, 10, 100, 1000, 10000]:
         best.append({"alpha": a, "val": price_scores(yva, best_price_model(tr, a)(va))})
+    if charts is not None:
+        charts["overfitting"] = {"degrees": degrees, "ridge_degree3": ridge}
     fig, ax = plt.subplots(1, 2, figsize=(14, 4.6))
     dd = pd.DataFrame(degrees)
     ax[0].plot(dd.degree, dd.train_r2, marker="o", color=COLORS["blue"], label="training listings")
@@ -308,7 +330,8 @@ def class_scores(y, p, threshold: float) -> dict:
             "precision": round(float(precision_score(y, flag, zero_division=0)), 3), "recall": round(float(recall_score(y, flag)), 3)}
 
 
-def classification(tr: pd.DataFrame, va: pd.DataFrame, threshold: float = 0.7, save: str | None = None) -> dict:
+def classification(tr: pd.DataFrame, va: pd.DataFrame, threshold: float = 0.7, save: str | None = None,
+                   charts: dict | None = None) -> dict:
     y = va.business.to_numpy()
     out = {}
     for name, booking in [("price features", False), ("+ booking behaviour", True)]:
@@ -342,8 +365,68 @@ def classification(tr: pd.DataFrame, va: pd.DataFrame, threshold: float = 0.7, s
     cs = ax[1].contour(gx, gy, pp, levels=[0.4, 0.5, 0.6], colors=[COLORS["gray"], COLORS["ink"], COLORS["gray"]],
                        linestyles=[":", "-", ":"])
     ax[1].clabel(cs, fmt={0.4: "40%", 0.5: "50%", 0.6: "60%"}, fontsize=8)
+    if charts is not None:
+        (b1, b2), b0 = m2.coef_[0], m2.intercept_[0]
+        (mr, mg), (sr, sg) = s2.mean_, s2.scale_
+
+        def guests_at(prob, rating):   # where the 2-feature model gives exactly `prob`
+            return float(mg + sg * (np.log(prob / (1 - prob)) - b0 - b1 * (rating - mr) / sr) / b2)
+
+        charts["classification"] = {
+            "threshold": threshold, "cutoffs": [round(float(t), 3) for t in ts],
+            "precision": [round(float(precision_score(y, p >= t, zero_division=0)), 3) for t in ts],
+            "recall": [round(float(recall_score(y, p >= t)), 3) for t in ts],
+            "sample": {"rating": [round(float(v), 3) for v in xj], "guests": [round(float(v), 2) for v in yj],
+                       "business": [int(v) for v in smp.business]},
+            "boundary": {str(q): [[3.5, round(guests_at(q, 3.5), 2)], [5.0, round(guests_at(q, 5.0), 2)]] for q in (0.4, 0.5, 0.6)},
+            # share of each group's validation listings by the model's probability (full model), in 5-point bins
+            "scores": {"bins": [round(b, 2) for b in np.arange(0, 1.0001, 0.05)],
+                       **{name: [round(float(v), 4) for v in np.histogram(p[y == lab], bins=np.arange(0, 1.0001, 0.05))[0] / (y == lab).sum()]
+                          for lab, name in [(0, "regular"), (1, "business")]}}}
     ax[1].set(xlabel="Rating (stars; listings without reviews shown at the median)", ylabel="Guests it sleeps",
               title="Decision boundary on two features: the groups overlap heavily")
     ax[1].legend(frameon=False, loc="upper left", markerscale=3, fontsize=9)
     _save(fig, save)
     return out
+
+
+# ---------------------------------------------------------------- step 7: predictions vs actual prices (test set)
+LABELLED = ["Copacabana", "Ipanema", "Leblon", "Barra da Tijuca", "Botafogo", "Centro", "Santa Teresa", "Recreio dos Bandeirantes"]
+
+
+def test_predictions(te: pd.DataFrame, log_pred: np.ndarray, save: str | None = None, charts: dict | None = None) -> dict:
+    """Predicted vs actual nightly price on the test set: every listing (a sample) and the median by neighbourhood."""
+    d = te.assign(pred=np.exp(log_pred))
+    hood = (d.groupby("neighbourhood").agg(actual=("price", "median"), pred=("pred", "median"), n=("price", "size"))
+            .query("n >= 30").sort_values("n", ascending=False))
+    within = float((np.abs(te.log_price - log_pred) <= np.log(1.5)).mean() * 100)
+    smp = d.sample(min(2500, len(d)), random_state=2)
+    fig, ax = plt.subplots(1, 2, figsize=(14, 5.6))
+    for rt, c in [("Entire home/apt", COLORS["blue"]), ("Private room", COLORS["orange"])]:
+        s = smp[smp.room_type == rt]
+        ax[0].scatter(s.pred, s.price, s=5, alpha=0.3, color=c, label=rt)
+    ax[1].scatter(hood.pred, hood.actual, s=np.sqrt(hood.n) * 4, color=COLORS["violet"], alpha=0.7, edgecolor="white")
+    for n, r in hood[hood.index.isin(LABELLED)].iterrows():
+        ax[1].annotate(n, (r.pred, r.actual), xytext=(5, 4), textcoords="offset points", fontsize=8, color=COLORS["ink2"])
+    for a, lo, hi, ticks in [(ax[0], 80, 8000, [100, 200, 500, 1000, 2000, 5000]), (ax[1], 150, 1500, [200, 300, 500, 700, 1000])]:
+        xs = np.array([lo, hi])
+        a.plot(xs, xs, color=COLORS["ink"], lw=1, ls="--", label="perfect prediction")
+        a.fill_between(xs, xs / 1.5, xs * 1.5, color=COLORS["gray"], alpha=0.12, lw=0, label="within ±50%")
+        a.set(xscale="log", yscale="log", xlim=(lo, hi), ylim=(lo, hi), xlabel="Predicted nightly price (R$, log scale)",
+              ylabel="Actual nightly price (R$, log scale)")
+        for axis in (a.xaxis, a.yaxis):
+            axis.set_minor_locator(matplotlib.ticker.NullLocator())
+            axis.set_ticks(ticks, [f"{t:,}" for t in ticks])
+    ax[0].set_title(f"Each test listing ({len(smp):,} of {len(d):,} shown): {within:.0f}% within ±50%")
+    ax[0].legend(frameon=False, loc="upper left", markerscale=3)
+    ax[1].set_title("Median by neighbourhood (30+ test listings)")
+    _save(fig, save)
+    if charts is not None:
+        charts["test_predictions"] = {
+            "within_50_pct": round(within, 1), "n": len(d),
+            "sample": {"pred": [round(float(v)) for v in smp.pred], "actual": [round(float(v)) for v in smp.price],
+                       "room_type": list(smp.room_type)},
+            "neighbourhoods": [{"name": n, "pred": round(float(r.pred)), "actual": round(float(r.actual)), "n": int(r.n)}
+                               for n, r in hood.iterrows()]}
+    return {"within_50_pct": round(within, 1),
+            "neighbourhood_r2": round(r2(np.log(hood.actual.to_numpy()), np.log(hood.pred.to_numpy())), 3)}
