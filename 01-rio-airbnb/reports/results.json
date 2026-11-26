@@ -1,0 +1,326 @@
+{
+ "counts": {
+  "listings": 43192,
+  "train": 29970,
+  "validation": 6876,
+  "test": 6346
+ },
+ "step1_beaches": {
+  "km_ocean_beach": {
+   "(0.0, 0.25]": 593,
+   "(0.25, 0.5]": 499,
+   "(0.5, 1.0]": 502,
+   "(1.0, 1.5]": 465,
+   "(1.5, 2.0]": 438,
+   "(2.0, 3.0]": 450,
+   "(3.0, 4.0]": 363,
+   "(4.0, 6.0]": 324,
+   "(6.0, 8.0]": 314,
+   "(8.0, 12.0]": 297,
+   "(12.0, 25.0]": 250
+  },
+  "km_bay_beach": {
+   "(0.0, 0.25]": 373,
+   "(0.25, 0.5]": 416,
+   "(0.5, 1.0]": 404,
+   "(1.0, 1.5]": 326,
+   "(1.5, 2.0]": 397,
+   "(2.0, 3.0]": 398,
+   "(3.0, 4.0]": 481,
+   "(4.0, 6.0]": 615,
+   "(6.0, 8.0]": 454,
+   "(8.0, 12.0]": 483,
+   "(12.0, 25.0]": 478
+  }
+ },
+ "step2_baselines": {
+  "typical Rio price": {
+   "r2": -0.02,
+   "typical_miss_pct": 77.3,
+   "median_miss_brl": 185
+  },
+  "location only (neighbourhood)": {
+   "r2": 0.132,
+   "typical_miss_pct": 67.0,
+   "median_miss_brl": 157
+  },
+  "size only (room type x bedrooms)": {
+   "r2": 0.336,
+   "typical_miss_pct": 57.9,
+   "median_miss_brl": 150
+  },
+  "both": {
+   "r2": 0.329,
+   "typical_miss_pct": 55.3,
+   "median_miss_brl": 133
+  },
+  "business: always 'not business' accuracy": 0.54
+ },
+ "step3_one_feature": {
+  "base_price_brl": 293,
+  "per_bedroom_pct": 43.6,
+  "validation": {
+   "r2": 0.262,
+   "typical_miss_pct": 62.2,
+   "median_miss_brl": 171
+  }
+ },
+ "step4_all_features": {
+  "scaling_final_cost": {
+   "Scaled, learning rate 0.0001": 0.302,
+   "Raw, same learning rate 0.0001": 134.92,
+   "Raw, 10x smaller rate 0.00001": 0.401
+  },
+  "lowest_cost": 0.302,
+  "validation": {
+   "r2": 0.463,
+   "typical_miss_pct": 51.3,
+   "median_miss_brl": 142
+  },
+  "effects_pct": {
+   "km_ocean_beach": -4.9,
+   "km_bay_beach": 1.0,
+   "km_metro": -1.8,
+   "sea_view": 20.6,
+   "beachfront": 7.8,
+   "guests": 6.4,
+   "bedrooms": 16.3,
+   "bathrooms": 12.3,
+   "shared_bath": -23.9,
+   "rating": 11.5,
+   "no_reviews": 38.1,
+   "years_listed": 2.7,
+   "reviews": -0.2,
+   "room_private": -22.1,
+   "room_shared": -52.0
+  },
+  "importance_order": [
+   "km_ocean_beach",
+   "bedrooms",
+   "guests",
+   "no_reviews",
+   "reviews",
+   "km_metro",
+   "bathrooms",
+   "room_private",
+   "years_listed",
+   "shared_bath",
+   "room_shared",
+   "km_bay_beach",
+   "sea_view",
+   "rating",
+   "beachfront"
+  ]
+ },
+ "step5_overfitting": {
+  "with_neighbourhoods": {
+   "train_r2": 0.492,
+   "val_r2": 0.506
+  },
+  "degrees": [
+   {
+    "degree": 1,
+    "terms": 15,
+    "train_r2": 0.429,
+    "val_r2": 0.463
+   },
+   {
+    "degree": 2,
+    "terms": 135,
+    "train_r2": 0.513,
+    "val_r2": 0.519
+   },
+   {
+    "degree": 3,
+    "terms": 815,
+    "train_r2": 0.552,
+    "val_r2": 0.359
+   },
+   {
+    "degree": 4,
+    "terms": 3875,
+    "train_r2": 0.605,
+    "val_r2": -401.696
+   }
+  ],
+  "ridge_degree3": [
+   {
+    "alpha": 0.01,
+    "train_r2": 0.552,
+    "val_r2": 0.359
+   },
+   {
+    "alpha": 0.1,
+    "train_r2": 0.552,
+    "val_r2": 0.36
+   },
+   {
+    "alpha": 1,
+    "train_r2": 0.552,
+    "val_r2": 0.363
+   },
+   {
+    "alpha": 10,
+    "train_r2": 0.552,
+    "val_r2": 0.392
+   },
+   {
+    "alpha": 100,
+    "train_r2": 0.55,
+    "val_r2": 0.473
+   },
+   {
+    "alpha": 1000,
+    "train_r2": 0.54,
+    "val_r2": 0.512
+   },
+   {
+    "alpha": 10000,
+    "train_r2": 0.505,
+    "val_r2": 0.499
+   },
+   {
+    "alpha": 100000,
+    "train_r2": 0.387,
+    "val_r2": 0.402
+   }
+  ],
+  "best_model_alphas": [
+   {
+    "alpha": 1,
+    "val": {
+     "r2": 0.538,
+     "typical_miss_pct": 46.0,
+     "median_miss_brl": 128
+    }
+   },
+   {
+    "alpha": 10,
+    "val": {
+     "r2": 0.538,
+     "typical_miss_pct": 46.0,
+     "median_miss_brl": 128
+    }
+   },
+   {
+    "alpha": 100,
+    "val": {
+     "r2": 0.539,
+     "typical_miss_pct": 46.0,
+     "median_miss_brl": 128
+    }
+   },
+   {
+    "alpha": 1000,
+    "val": {
+     "r2": 0.539,
+     "typical_miss_pct": 46.1,
+     "median_miss_brl": 127
+    }
+   },
+   {
+    "alpha": 10000,
+    "val": {
+     "r2": 0.519,
+     "typical_miss_pct": 47.6,
+     "median_miss_brl": 131
+    }
+   }
+  ]
+ },
+ "step6_classification": {
+  "price features": {
+   "auc": 0.607,
+   "at_0.5": {
+    "threshold": 0.5,
+    "accuracy": 0.582,
+    "flagged_pct": 28.2,
+    "precision": 0.574,
+    "recall": 0.352
+   }
+  },
+  "+ booking behaviour": {
+   "auc": 0.668,
+   "at_0.5": {
+    "threshold": 0.5,
+    "accuracy": 0.62,
+    "flagged_pct": 35.0,
+    "precision": 0.614,
+    "recall": 0.467
+   }
+  },
+  "thresholds": [
+   {
+    "threshold": 0.5,
+    "accuracy": 0.62,
+    "flagged_pct": 35.0,
+    "precision": 0.614,
+    "recall": 0.467
+   },
+   {
+    "threshold": 0.6,
+    "accuracy": 0.614,
+    "flagged_pct": 19.2,
+    "precision": 0.692,
+    "recall": 0.289
+   },
+   {
+    "threshold": 0.7,
+    "accuracy": 0.572,
+    "flagged_pct": 5.1,
+    "precision": 0.813,
+    "recall": 0.091
+   },
+   {
+    "threshold": 0.8,
+    "accuracy": 0.551,
+    "flagged_pct": 1.9,
+    "precision": 0.792,
+    "recall": 0.033
+   }
+  ],
+  "strongest_signs": {
+   "superhost": 0.49,
+   "rating": -0.28,
+   "room_shared": 0.17,
+   "room_private": 0.17,
+   "km_ocean_beach": -0.17,
+   "bedrooms": -0.16
+  }
+ },
+ "test": {
+  "price_model": {
+   "alpha": 100,
+   "r2": 0.542,
+   "typical_miss_pct": 44.9,
+   "median_miss_brl": 123
+  },
+  "price_predictions": {
+   "within_50_pct": 66.3,
+   "neighbourhood_r2": 0.878
+  },
+  "price_baseline_both_lookup": {
+   "r2": 0.361,
+   "typical_miss_pct": 54.0,
+   "median_miss_brl": 134
+  },
+  "business": {
+   "auc": 0.641,
+   "always_not_business_accuracy": 0.587,
+   "at_0.5": {
+    "threshold": 0.5,
+    "accuracy": 0.598,
+    "flagged_pct": 30.3,
+    "precision": 0.519,
+    "recall": 0.381
+   },
+   "at_chosen": {
+    "threshold": 0.7,
+    "accuracy": 0.597,
+    "flagged_pct": 3.0,
+    "precision": 0.668,
+    "recall": 0.049
+   }
+  }
+ }
+}
