@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.idea/
+.DS_Store
+notebooks/_build.ipynb
+# Raw downloads (rebuilt by scripts/run_lesson.py --download); the slim modelling file is committed.
+01-rio-airbnb/data/listings.csv.gz
